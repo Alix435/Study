@@ -1,0 +1,55 @@
+filename = 'glossariy.txt'
+
+def create_file(filename_out, body):
+    with open(filename_out, 'w', encoding='utf-8') as f_out:
+        f_out.write("\n**Определение**\n" + body)
+
+def read_file():
+    with open(filename, 'r', encoding='utf-8') as f:
+        lines = f.readlines()
+
+        full_text_lines = []
+        current_line = ""
+
+        for l in lines:
+            # Убираем перевод строки для проверки
+            l_stripped = l.rstrip('\n')
+
+            # Проверяем, заканчивается ли строка на точку (с учетом \n)
+            if l_stripped.endswith('.'):
+                # Добавляем текущую строку в список предложений
+                if current_line:
+                    full_text_lines.append(current_line.strip())
+                    current_line = ""
+                # Добавляем саму строку как отдельное предложение
+                full_text_lines.append(l_stripped.strip())
+            else:
+                # Если строка не заканчивается точкой, добавляем к текущей
+                if current_line:
+                    current_line += " " + l_stripped
+                else:
+                    current_line = l_stripped
+
+            # Добавляем последнюю строку, если есть
+        if current_line:
+            full_text_lines.append(current_line.strip())
+
+            # Обрабатываем каждое предложение
+        for line in full_text_lines:
+            if not line:
+                continue
+
+            # Проверяем оба варианта тире
+            if ' – ' in line:
+                header, body = line.split(' – ', 1)
+            elif ' — ' in line:
+                header, body = line.split(' — ', 1)
+            else:
+                print(f"Строка не содержит разделитель: {line}")
+                continue
+
+            filename_out = f"{header}.md"
+            create_file(filename_out, body)
+
+if __name__ == '__main__':
+    read_file()
