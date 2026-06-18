@@ -1,0 +1,87 @@
+import os
+import re
+
+
+class FolderStruct:
+    def __init__(self):
+        self.file_path_const = 'konspect_struct.txt'
+        self.lines = self.read_file()
+        self.central_command()
+
+    def read_file(self):
+        lines = []
+        with open(self.file_path_const, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.rstrip('\n\r')
+                if line.endswith('.'):
+                    line = line[:-1]
+                if line.strip():
+                    lines.append(line)
+        return lines
+
+    def create_abbreviation(self, text):
+        text = text.replace('.', '').replace(',', '').replace(';', '').replace(':', '')
+        words = text.split()
+
+        stop_words = {'в', 'на', 'с', 'к', 'у', 'по', 'за', 'из', 'от', 'и', 'а', 'но', 'о', 'об'}
+        abbreviation = []
+
+        for word in words:
+            if len(word) <= 2 and word.lower() in stop_words:
+                abbreviation.append(word.lower())
+            else:
+                abbreviation.append(word[0].upper())
+        return ''.join(abbreviation)
+
+    def create_folder(self, folder_name):
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+
+    def create_file_md(self, folder, file_name, content):
+        filepath = os.path.join(folder, file_name)
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"  Создан файл: {filepath}")
+
+    def central_command(self):
+        current_theme_folder = None
+
+        for line in self.lines:
+            if not line:
+                continue
+
+            # Обработка темы
+            theme_match = re.match(r'Тема\s+(\d+)\.\s*(.+)', line)
+            if theme_match:
+                theme_num = theme_match.group(1)
+                theme_name = theme_match.group(2).strip()
+                theme_short = self.create_abbreviation(theme_name)
+
+                # Создаем папку
+                folder_name = f"Тема {theme_num}. {theme_short}"
+                self.create_folder(folder_name)
+
+                # Создаем файл темы
+                file_name = f"{folder_name}.md"
+                content = f"Тема {theme_num}. {theme_name}"
+                self.create_file_md(folder_name, file_name, content)
+
+                current_theme_folder = folder_name
+                print(f"\nОбработана тема: {folder_name}")
+                continue
+
+            # Обработка вопроса
+            question_match = re.match(r'Вопрос\s+(\d+)\.\s*(.+)', line)
+            if question_match and current_theme_folder:
+                question_num = question_match.group(1)
+                question_text = question_match.group(2).strip()
+                question_short = self.create_abbreviation(question_text)
+
+                # Создаем файл вопроса
+                file_name = f"Вопрос {question_num}. {question_short}.md"
+                content = f"Вопрос {question_num}. {question_text}"
+                self.create_file_md(current_theme_folder, file_name, content)
+
+
+if __name__ == "__main__":
+    FS = FolderStruct()
